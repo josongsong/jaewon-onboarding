@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>종합 온보딩 지식 퀴즈</title>
+    <title>50문항 온보딩 지식 퀴즈</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Source+Code+Pro&display=swap');
 
@@ -34,24 +34,26 @@
             border-radius: 12px;
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 700px;
+            max-width: 800px;
             overflow: hidden;
         }
+        
+        .quiz-content { padding: 30px 40px; }
+        
+        #progress-bar-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            height: 10px;
+            margin-bottom: 20px;
+        }
 
-        #quiz-header {
+        #progress-bar {
+            width: 0%;
+            height: 100%;
             background-color: var(--primary-color);
-            color: white;
-            padding: 20px 25px;
-            text-align: center;
-        }
-
-        #quiz-header h1 {
-            margin: 0;
-            font-size: 1.6em;
-        }
-
-        #quiz-body {
-            padding: 25px 30px;
+            border-radius: 5px;
+            transition: width 0.3s ease;
         }
 
         #question-info {
@@ -88,8 +90,11 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .option-label:hover { background-color: #f8f9fa; border-color: var(--primary-color); }
-        .option-label input { margin-right: 12px; }
+        .option-label.selected {
+             border-color: var(--primary-color);
+             background-color: #e7f0ff;
+        }
+        .option-label input { margin-right: 12px; display: none; }
 
         .short-answer-input, .coding-input {
             width: 100%;
@@ -113,256 +118,278 @@
             font-family: 'Source Code Pro', monospace;
         }
         
-        #feedback {
-            margin-top: 20px; padding: 15px; border-radius: 8px; display: none;
-            text-align: left; line-height: 1.5; border-left: 5px solid;
-        }
-        #feedback.correct { border-left-color: var(--success-color); background-color: #f1f9f2; display: block; }
-        #feedback.wrong { border-left-color: var(--danger-color); background-color: #fcf2f2; display: block; }
-        #feedback p { margin: 0; font-weight: 700; }
-        #feedback .rationale { margin-top: 8px; font-size: 0.9em; }
-
-        #navigation { display: flex; justify-content: center; padding: 20px 30px; border-top: 1px solid var(--border-color); }
+        #navigation { display: flex; justify-content: flex-end; padding: 20px 40px; border-top: 1px solid var(--border-color); }
         .nav-btn {
             background-color: var(--primary-color); color: #fff; border: none;
             border-radius: 8px; padding: 12px 24px; font-size: 1em;
             font-weight: 700; cursor: pointer; transition: background-color 0.2s ease;
         }
-        .nav-btn:hover { background-color: #0056b3; }
+        .nav-btn:disabled { background-color: #a2c9f5; cursor: not-allowed; }
         
-        #results-container { display: none; text-align: center; padding: 40px; }
-        #results-container h2 { font-size: 1.8em; margin-bottom: 20px; color: var(--primary-color); }
-        #score { font-size: 1.4em; margin-bottom: 30px; }
-        #restart-btn { background-color: var(--success-color); }
+        #results-page, #start-page { text-align: center; }
+        #results-page h2, #start-page h2 { font-size: 2em; margin-bottom: 20px; color: var(--primary-color); }
+        #score { font-size: 1.5em; margin-bottom: 30px; }
+        #review-container { text-align: left; margin-top: 30px; max-height: 500px; overflow-y: auto; padding-right: 15px;}
+        .review-item { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; padding: 15px; }
+        .review-item.correct { border-left: 5px solid var(--success-color); }
+        .review-item.wrong { border-left: 5px solid var(--danger-color); }
+        .review-question { font-weight: 700; margin-bottom: 10px; }
+        .review-answer { font-size: 0.9em; }
+        .review-answer span { display: block; margin-top: 5px; }
+        .review-answer .user-answer.wrong { color: var(--danger-color); text-decoration: line-through; }
+        .review-answer .correct-answer { color: var(--success-color); font-weight: 700; }
     </style>
 </head>
 <body>
     <div id="quiz-container">
-        <div id="quiz-header"><h1>종합 온보딩 지식 퀴즈</h1></div>
-        <div id="quiz-body">
-            <div id="question-box">
-                <div id="question-info">
-                    <span id="question-number"></span>
-                    <span id="question-type"></span>
-                </div>
-                <p id="question-text"></p>
-                <div id="answer-area"></div>
-                <div id="feedback"></div>
+        <div id="start-page" class="quiz-content">
+            <h2>온보딩 지식 종합 퀴즈</h2>
+            <p>총 50문제로 구성되어 있습니다.<br>학습한 내용을 바탕으로 자신의 이해도를 점검해보세요!</p>
+            <button id="start-btn" class="nav-btn">퀴즈 시작</button>
+        </div>
+        <div id="quiz-page" class="quiz-content" style="display: none;">
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
             </div>
-            <div id="results-container">
-                <h2>퀴즈 완료!</h2>
-                <p id="score"></p>
-                <button id="restart-btn" class="nav-btn">처음부터 다시 풀기</button>
+            <div id="question-info">
+                <span id="question-number"></span>
+                <span id="question-type"></span>
             </div>
+            <p id="question-text"></p>
+            <div id="answer-area"></div>
+        </div>
+        <div id="results-page" class="quiz-content" style="display: none;">
+            <h2>퀴즈 완료!</h2>
+            <p id="score"></p>
+            <button id="restart-btn" class="nav-btn">처음부터 다시 풀기</button>
+            <div id="review-container"></div>
         </div>
         <div id="navigation">
-            <button id="submit-btn" class="nav-btn">정답 확인</button>
+            <button id="next-btn" class="nav-btn" style="display: none;">다음</button>
         </div>
     </div>
 
     <script>
         const quizData = [
-            // --- Networking ---
-            {
-                type: 'multiple-choice',
-                question: "실시간 스트리밍이나 온라인 게임과 같이, 약간의 데이터 손실이 있더라도 속도가 매우 중요한 서비스에 더 적합한 프로토콜은 무엇인가요?",
-                options: ["TCP", "UDP", "HTTP", "FTP"],
-                correct: 1,
-                rationale: "UDP는 연결 설정 과정이 없고 데이터 전송의 신뢰성을 보장하지 않는 대신, 매우 빠른 속도를 제공하여 실시간성이 중요한 서비스에 유리합니다."
-            },
-            {
-                type: 'short-answer',
-                question: "TCP 연결 수립 과정인 '3-way handshake'의 3단계를 순서와 관계없이 모두 작성해주세요. (약어 사용 가능)",
-                keywords: ["syn", "ack", "syn-ack"],
-                rationale: "정답 키워드: SYN, ACK, SYN-ACK. 클라이언트가 서버에 연결 요청(SYN)을 보내고, 서버는 수락 응답(SYN-ACK)을 보내며, 클라이언트가 최종 확인(ACK)을 보내 연결이 수립됩니다."
-            },
-            {
-                type: 'multiple-choice',
-                question: "사용자와 물리적으로 가장 가까운 서버에서 이미지나 CSS 같은 정적 콘텐츠를 전송하여 로딩 속도를 향상시키는 기술은 무엇인가요?",
-                options: ["Load Balancer", "CDN (Content Delivery Network)", "API Gateway", "Web Socket"],
-                correct: 1,
-                rationale: "CDN은 전 세계 여러 지역에 분산된 캐시 서버(Edge Server)에 콘텐츠를 미리 저장해두고, 사용자와 가장 가까운 서버에서 콘텐츠를 제공하여 지연 시간을 최소화합니다."
-            },
-            // --- Operating System ---
-            {
-                type: 'multiple-choice',
-                question: "CPU가 가상 주소를 실제 물리 주소로 변환하는 작업을 전담하며, 메모리 보호 기능도 수행하는 하드웨어 장치는 무엇인가요?",
-                options: ["CPU 코어", "TLB", "MMU (Memory Management Unit)", "RAM 컨트롤러"],
-                correct: 2,
-                rationale: "MMU는 CPU와 메모리 사이에 위치하여 주소 변환 및 메모리 접근 제어를 담당하는 하드웨어로, 가상 메모리 시스템의 핵심입니다."
-            },
-            {
-                type: 'short-answer',
-                question: "캐시의 효율성을 설명하는 '지역성(Locality)'의 두 가지 원칙은 무엇인가요?",
-                keywords: ["시간적", "공간적", "temporal", "spatial"],
-                rationale: "정답 키워드: 시간적 지역성, 공간적 지역성. 시간적 지역성은 '최근 사용된 데이터는 곧 다시 사용될 가능성이 높다'는 것이고, 공간적 지역성은 '최근 사용된 데이터 주변의 데이터가 곧 사용될 가능성이 높다'는 원칙입니다."
-            },
-            {
-                type: 'coding',
-                question: "아래는 LRU 캐시의 get() 메서드 일부입니다. 캐시에 키가 존재할 경우, 해당 노드를 '가장 최근에 사용됨'으로 처리해야 합니다. `// TODO:` 부분에 들어가야 할 핵심적인 동작을 설명하거나 코드를 작성하세요.",
-                code: `class LRUCache {\n  // ... map, list (DoublyLinkedList) ...\n\n  get(key) {\n    if (this.map.has(key)) {\n      const node = this.map.get(key);\n      // TODO: 이 노드를 가장 최근에 사용했음을 어떻게 표시할까요?\n      return node.value;\n    }\n    return -1;\n  }\n}`,
-                keywords: ["맨 앞으로", "move to front", "list.add", "list.remove", "가장 최근"],
-                rationale: "정답 키워드: '노드를 맨 앞으로 이동' 또는 '기존 위치에서 노드를 삭제하고, 리스트의 맨 앞에 다시 추가'. 이 작업을 통해 해당 데이터가 가장 최근에 사용되었음을 표시합니다."
-            },
-             // --- Database ---
-            {
-                type: 'short-answer',
-                question: "데이터베이스 트랜잭션의 신뢰성을 보장하는 ACID 원칙의 4가지 요소를 모두 나열하세요.",
-                keywords: ["원자성", "일관성", "격리성", "지속성", "atomicity", "consistency", "isolation", "durability"],
-                rationale: "정답 키워드: 원자성(Atomicity), 일관성(Consistency), 격리성(Isolation), 지속성(Durability)."
-            },
-            {
-                type: 'multiple-choice',
-                question: "Elasticsearch가 RDBMS보다 텍스트 검색에 훨씬 효율적인 이유는 사용하는 핵심 자료구조 때문입니다. 이 자료구조는 무엇인가요?",
-                options: ["B+Tree", "해시 테이블", "역 인덱스 (Inverted Index)", "그래프 (Graph)"],
-                correct: 2,
-                rationale: "역 인덱스는 책의 '찾아보기'처럼, 문서의 '단어'를 기준으로 해당 단어가 포함된 '문서 ID'를 미리 저장해두어, 특정 단어로 검색 시 매우 빠르게 해당 문서를 찾을 수 있습니다."
-            },
-            // --- Architecture & Programming ---
-            {
-                type: 'multiple-choice',
-                question: "좋은 객체 지향 설계를 위한 SOLID 원칙 중, '클래스는 확장에 대해서는 열려 있어야 하고, 변경에 대해서는 닫혀 있어야 한다'는 원칙은 무엇인가요?",
-                options: ["SRP (단일 책임 원칙)", "OCP (개방-폐쇄 원칙)", "LSP (리스코프 치환 원칙)", "DIP (의존관계 역전 원칙)"],
-                correct: 1,
-                rationale: "OCP는 기존 코드를 수정하지 않고도(변경에 닫힘) 새로운 기능을 추가할 수 있도록(확장에 열림) 설계해야 한다는 원칙으로, 주로 다형성을 통해 달성됩니다."
-            },
-            {
-                type: 'short-answer',
-                question: "MSA(마이크로서비스 아키텍처)에서 '서킷 브레이커' 패턴을 사용하는 주된 목적은 무엇인가요?",
-                keywords: ["장애 확산 방지", "연쇄 실패 방지", "cascading failure"],
-                rationale: "정답 키워드: '장애 확산 방지' 또는 '연쇄 실패 방지'. 서킷 브레이커는 특정 서비스의 장애가 다른 서비스로 연쇄적으로 전파되어 전체 시스템이 마비되는 것을 막기 위해 사용됩니다."
-            }
+            // Networking (12)
+            { type: 'multiple-choice', q: "실시간 스트리밍이나 온라인 게임과 같이, 속도가 매우 중요한 서비스에 더 적합한 프로토콜은?", o: ["TCP", "UDP", "HTTP", "FTP"], c: 1, r: "UDP는 연결 설정 과정 없이 데이터를 전송하여 속도가 빠르므로 실시간성이 중요한 서비스에 유리합니다." },
+            { type: 'multiple-choice', q: "URL 경로(예: /users)를 기반으로 요청을 다른 서버 그룹으로 라우팅하는 기능은 어떤 로드 밸런서에서 제공되나요?", o: ["L2 로드 밸런서", "L4 로드 밸런서", "L7 로드 밸런서", "DNS 라운드 로빈"], c: 2, r: "L7 로드 밸런서는 애플리케이션 계층에서 동작하여 HTTP 헤더나 URL 경로를 분석해 정교한 라우팅이 가능합니다." },
+            { type: 'short-answer', q: "TCP 연결 수립 과정인 '3-way handshake'의 3단계를 순서와 관계없이 모두 작성하세요.", k: ["syn", "ack", "syn-ack"], r: "정답 키워드: SYN, ACK, SYN-ACK. 클라이언트가 서버에 연결 요청(SYN), 서버는 수락 응답(SYN-ACK), 클라이언트가 최종 확인(ACK)을 보내 연결이 수립됩니다." },
+            { type: 'multiple-choice', q: "사용자와 물리적으로 가장 가까운 서버에서 이미지나 CSS 같은 정적 콘텐츠를 전송하여 로딩 속도를 향상시키는 기술은?", o: ["Load Balancer", "CDN (Content Delivery Network)", "API Gateway", "Web Socket"], c: 1, r: "CDN은 전 세계에 분산된 캐시 서버(Edge Server)에서 콘텐츠를 제공하여 지연 시간을 최소화합니다." },
+            { type: 'multiple-choice', q: "OSI 7계층 모델에서 4계층(Transport Layer)에 해당하는 프로토콜 두 가지는 무엇인가요?", o: ["HTTP, FTP", "IP, ICMP", "TCP, UDP", "Ethernet, Wi-Fi"], c: 2, r: "TCP와 UDP는 전송 계층에서 통신의 신뢰성, 흐름 제어 등을 담당하는 대표적인 프로토콜입니다." },
+            { type: 'short-answer', q: "웹 브라우저가 도메인 이름(예: google.com)에 해당하는 IP 주소를 찾기 위해 사용하는 시스템을 무엇이라고 하나요?", k: ["dns", "domain name system"], r: "정답: DNS (Domain Name System). 사람이 읽기 쉬운 도메인 이름을 컴퓨터가 이해하는 IP 주소로 변환해주는 시스템입니다." },
+            { type: 'coding', q: "클라이언트가 서버와 지속적인 양방향 통신 채널을 만들기 위해, HTTP 요청 헤더에 포함해야 하는 두 가지 핵심 필드는 무엇일까요? 아래 `headers` 객체를 채워보세요.", code: `const headers = {\n  // TODO: Add required headers here\n};`, k: ["upgrade", "websocket", "connection"], r: "정답 키워드: 'Upgrade: websocket', 'Connection: Upgrade'. 이 헤더들은 서버에게 HTTP에서 웹소켓 프로토콜로 전환을 요청합니다." },
+            { type: 'multiple-choice', q: "HTTP/1.1부터 도입되어, 하나의 TCP 연결을 여러 HTTP 요청에 재사용하여 성능을 향상시키는 기술은 무엇인가요?", o: ["멀티플렉싱", "지속적 연결 (Persistent Connection)", "파이프라이닝", "서버 푸시"], c: 1, r: "지속적 연결은 매번 TCP 연결을 새로 맺고 끊는 오버헤드를 줄여줍니다. HTTP/2의 멀티플렉싱은 이 개념을 더욱 발전시킨 것입니다." },
+            { type: 'short-answer', q: "클라이언트의 IP 주소를 해싱하여 항상 동일한 서버로 요청을 보내는 로드 밸런싱 알고리즘은 무엇이며, 어떤 경우에 유용한가요?", k: ["ip hash", "ip해시", "세션", "session"], r: "정답: IP Hash. 사용자의 로그인 세션과 같이 특정 서버에 상태 정보가 유지되어야 하는 경우(Session Persistence)에 유용합니다." },
+            { type: 'multiple-choice', q: "다음 중 HTTPS의 역할이 아닌 것은 무엇인가요?", o: ["데이터 암호화(Encryption)", "서버 인증(Authentication)", "요청-응답 속도 향상(Performance)", "데이터 무결성(Data Integrity)"], c: 2, r: "HTTPS는 SSL/TLS 계층을 추가하여 보안을 강화하지만, 암호화/복호화 과정으로 인해 순수 HTTP보다 약간의 속도 저하가 발생할 수 있습니다." },
+            { type: 'short-answer', q: "네트워크 통신에서 주어진 시간 안에 전송할 수 있는 최대 데이터 양을 의미하는 용어는 무엇인가요?", k: ["대역폭", "bandwidth"], r: "정답: 대역폭 (Bandwidth). 흔히 도로의 폭에 비유되며, 네트워크의 성능을 나타내는 중요한 지표 중 하나입니다." },
+            { type: 'multiple-choice', q: "QUIC 프로토콜이 TCP의 어떤 문제를 해결하기 위해 등장했나요?", o: ["신뢰성 없는 데이터 전송", "연결 설정 지연과 HOL Blocking", "암호화 기능의 부재", "느린 전송 속도"], c: 1, r: "QUIC은 TCP+TLS의 여러 번의 RTT가 소요되는 핸드셰이크를 1-RTT로 줄이고, 스트림 기반으로 HOL Blocking 문제를 해결합니다." },
+            
+            // OS (8)
+            { type: 'multiple-choice', q: "CPU가 가상 주소를 실제 물리 주소로 변환하는 작업을 전담하는 하드웨어 장치는?", o: ["CPU 코어", "TLB", "MMU (Memory Management Unit)", "RAM 컨트롤러"], c: 2, r: "MMU는 가상 메모리 시스템의 핵심으로, 주소 변환 및 메모리 접근 제어를 담당합니다." },
+            { type: 'short-answer', q: "캐시의 효율성을 설명하는 '지역성(Locality)'의 두 가지 원칙은 무엇인가요?", k: ["시간적", "공간적", "temporal", "spatial"], r: "정답: 시간적 지역성(최근 사용된 데이터는 다시 사용될 확률이 높다), 공간적 지역성(최근 사용된 데이터 주변의 데이터가 사용될 확률이 높다)." },
+            { type: 'multiple-choice', q: "파일을 저장할 때, 파일의 모든 데이터 블록 주소를 '인덱스 블록'이라는 하나의 블록에 모아서 관리하는 디스크 할당 방식은 무엇인가요?", o: ["연속 할당", "연결 할당", "인덱스 할당", "비트맵 할당"], c: 2, r: "인덱스 할당은 직접 접근(Random Access)이 빠르고 외부 단편화가 없다는 장점 때문에 현대 파일 시스템에서 널리 사용됩니다." },
+            { type: 'short-answer', q: "메모리가 가득 찼을 때, '가장 오랫동안 참조되지 않은' 페이지를 교체하는 알고리즘은 무엇인가요?", k: ["lru", "least recently used"], r: "정답: LRU (Least Recently Used). 시간적 지역성을 활용한 대표적인 페이지 교체 알고리즘입니다." },
+            { type: 'multiple-choice', q: "프로세스가 자신에게 할당되지 않은 메모리 영역에 접근하려고 할 때 발생하는 오류를 무엇이라고 하나요?", o: ["Page Fault", "Deadlock", "Segmentation Fault", "Stack Overflow"], c: 2, r: "Segmentation Fault는 보호된 메모리 영역에 대한 잘못된 접근 시 운영체제가 프로세스를 강제 종료시키며 발생하는 오류입니다. Page Fault는 필요한 페이지가 메모리에 없는 경우입니다." },
+            { type: 'coding', q: "디스크의 빈 공간을 관리하는 방식 중 하나인 '비트맵(Bitmap)' 방식의 장점을 코딩 관점에서 간략히 설명하세요.", code: `// 디스크 블록 수: 1024, 1은 사용 중, 0은 비어있음\nconst diskBitmap = [1, 1, 0, 0, 0, 1, ...];`, k: ["연속된 공간", "탐색 용이", "배열", "bit"], r: "정답 키워드: '연속된 빈 공간 탐색 용이'. 비트맵은 배열처럼 표현되므로, 특정 크기의 연속된 0(빈 블록)을 찾는 작업이 비교적 간단하고 빠릅니다." },
+            { type: 'short-answer', q: "운영체제가 하드디스크의 일부 공간을 마치 RAM의 확장처럼 사용하여, 실제 물리 메모리보다 더 큰 공간을 프로그램에 제공하는 기술은 무엇인가요?", k: ["가상 메모리", "virtual memory", "페이징", "스와핑"], r: "정답: 가상 메모리(Virtual Memory). 이는 페이징과 스와핑 기법을 통해 구현됩니다." },
+            { type: 'multiple-choice', q: "다음 중 L1 캐시에 대한 설명으로 가장 적절한 것은 무엇인가요?", o: ["모든 CPU 코어가 공유하는 가장 큰 캐시", "CPU 칩 외부에 위치한 캐시", "CPU 코어 내부에 직접 내장된 가장 빠르고 작은 캐시", "주로 디스크 데이터를 캐싱하는 데 사용"], c: 2, r: "L1 캐시는 CPU의 연산 속도와 메모리 접근 속도 간의 격차를 줄이기 위한 가장 첫 번째 단계의 캐시로, CPU 코어에 가장 가깝고 속도가 가장 빠릅니다." },
+
+            // Database (15)
+            { type: 'short-answer', q: "데이터베이스 트랜잭션의 신뢰성을 보장하는 ACID 원칙의 4가지 요소를 모두 나열하세요.", k: ["원자성", "일관성", "격리성", "지속성", "atomicity", "consistency", "isolation", "durability"], r: "정답 키워드: 원자성(Atomicity), 일관성(Consistency), 격리성(Isolation), 지속성(Durability)." },
+            { type: 'multiple-choice', q: "Elasticsearch가 텍스트 검색에 효율적인 이유는 어떤 핵심 자료구조를 사용하기 때문인가요?", o: ["B+Tree", "해시 테이블", "역 인덱스 (Inverted Index)", "그래프 (Graph)"], c: 2, r: "역 인덱스는 책의 '찾아보기'처럼, 문서의 단어를 기준으로 해당 단어가 포함된 문서 ID를 저장하여, 특정 단어로 검색 시 매우 빠르게 문서를 찾을 수 있습니다." },
+            { type: 'multiple-choice', q: "모든 데이터를 메모리(RAM)에 저장하여 디스크 기반 데이터베이스보다 월등히 빠른 속도를 제공하는 데이터베이스 유형은 무엇인가요? (Redis가 대표적)", o: ["관계형 데이터베이스", "NoSQL 데이터베이스", "인메모리 데이터베이스", "객체 지향 데이터베이스"], c: 2, r: "인메모리 데이터베이스는 디스크 I/O가 거의 발생하지 않아 매우 낮은 지연 시간(Latency)을 가집니다." },
+            { type: 'short-answer', q: "Redis의 데이터 영속성 방식 중, 특정 시점의 메모리 상태를 그대로 디스크에 저장(스냅샷)하는 방식은 무엇인가요?", k: ["rdb", "redis database"], r: "정답: RDB (Redis Database). AOF 방식에 비해 복구 속도가 빠르지만, 마지막 스냅샷 이후의 데이터는 유실될 수 있습니다." },
+            { type: 'multiple-choice', q: "하나의 거대한 데이터베이스를 여러 개의 작은 조각(Shard)으로 나누어 여러 서버에 분산 저장하는 기술을 무엇이라고 하나요?", o: ["복제 (Replication)", "파티셔닝 (Partitioning)", "샤딩 (Sharding)", "인덱싱 (Indexing)"], c: 2, r: "샤딩은 수평적 확장(Horizontal Scaling)을 가능하게 하여 대용량 데이터와 트래픽을 처리하기 위해 사용됩니다." },
+            { type: 'multiple-choice', q: "MySQL의 InnoDB 스토리지 엔진에서, 변경하려는 행(Row)에만 잠금을 적용하여 동시성을 극대화하는 잠금 방식을 무엇이라고 하나요?", o: ["Table-level Locking", "Page-level Locking", "Row-level Locking", "Shared Lock"], c: 2, r: "Row-level Locking 덕분에 여러 트랜잭션이 동일한 테이블의 서로 다른 행을 동시에 수정할 수 있어 동시 처리 성능이 우수합니다." },
+            { type: 'short-answer', q: "데이터베이스에서 데이터 검색 속도를 향상시키기 위해, 특정 컬럼의 값과 해당 데이터의 위치 정보를 별도로 저장하는 자료구조는 무엇인가요?", k: ["인덱스", "index"], r: "정답: 인덱스(Index). 인덱스가 없으면 테이블 전체를 탐색(Full Scan)해야 해서 매우 비효율적입니다." },
+            { type: 'coding', q: "WHERE 절에 `name LIKE '%길동'` 과 같은 쿼리가 있을 때, RDBMS의 인덱스가 효율적으로 동작하기 어려운 이유는 무엇인지 간략히 설명하세요.", code: `SELECT * FROM users WHERE name LIKE '%길동';`, k: ["앞부분", "prefix", "시작", "와일드카드", "wildcard"], r: "정답 키워드: '앞부분 와일드카드' 또는 '시작 부분이 아닌 검색'. 인덱스는 데이터가 정렬된 구조이므로, 검색 조건의 시작 부분이 명시되어야 효율적으로 탐색할 수 있습니다." },
+            { type: 'multiple-choice', q: "Redis의 고가용성(HA) 구성 방식 중, 마스터 서버의 장애를 감시하고 자동으로 슬레이브를 마스터로 승격시키는 역할을 하는 것은 무엇인가요?", o: ["Stand-Alone", "Sentinel", "Cluster", "Replication"], c: 1, r: "Sentinel은 마스터/슬레이브 구성을 모니터링하다가 장애 발생 시 자동으로 Failover를 수행하여 서비스 중단을 최소화합니다." },
+            { type: 'short-answer', q: "데이터베이스 샤딩 시, 데이터를 어떤 샤드에 저장할지 결정하는 기준이 되는 컬럼을 무엇이라고 하나요?", k: ["샤드 키", "shard key"], r: "정답: 샤드 키(Shard Key). 어떤 샤드 키를 선택하느냐에 따라 데이터 분산의 효율성과 쿼리 성능이 크게 달라집니다." },
+            { type: 'multiple-choice', q: "다음 중 RDBMS(관계형 데이터베이스)의 특징이 아닌 것은?", o: ["테이블, 행, 열로 구성된 데이터 모델", "외래 키를 통한 데이터 무결성 보장", "스키마 없이 자유로운 데이터 구조", "SQL을 사용한 데이터 질의"], c: 2, r: "스키마 없이 자유로운 데이터 구조는 NoSQL 데이터베이스의 특징입니다. RDBMS는 정해진 스키마(구조)에 따라 데이터를 저장해야 합니다." },
+            { type: 'multiple-choice', q: "Redis가 단일 스레드임에도 높은 처리량을 보이는 주된 이유는 무엇인가요?", o: ["멀티코어를 효율적으로 사용", "모든 연산을 병렬로 처리", "Event-Driven Non-Blocking I/O 모델 사용", "CPU-Bounded 작업을 빠르게 처리"], c: 2, r: "Redis는 I/O 작업을 커널에 위임하고 이벤트 루프를 통해 완료된 작업만 처리하므로, 스레드가 I/O를 기다리며 멈추는(Blocking) 현상 없이 계속해서 다른 요청을 처리할 수 있습니다." },
+            { type: 'short-answer', q: "데이터베이스 인덱스에서 주로 사용되는 B+Tree가 일반적인 이진 트리(Binary Tree)에 비해 가지는 장점은 무엇인가요?", k: ["디스크", "disk", "io", "높이", "height", "fanout"], r: "정답 키워드: '디스크 I/O 횟수 감소'. B+Tree는 하나의 노드에 많은 자식을 가질 수 있어 트리의 높이가 낮게 유지되고, 이는 디스크 접근 횟수를 줄여 검색 성능을 향상시킵니다." },
+            { type: 'multiple-choice', q: "데이터베이스에서 하나의 트랜잭션이 데이터를 읽고 있을 때, 다른 트랜잭션이 해당 데이터를 수정하거나 삭제하지 못하도록 막는 잠금을 무엇이라고 하나요?", o: ["Exclusive Lock (배타적 잠금)", "Shared Lock (공유 잠금)", "Row-level Lock", "Deadlock"], c: 1, r: "공유 잠금은 여러 트랜잭션이 동시에 데이터를 읽는 것을 허용하지만, 쓰는 것은 막습니다. 반면 배타적 잠금은 읽기와 쓰기 모두를 막습니다." },
+            { type: 'coding', q: "샤딩 방식 중 'Range-based Partitioning'의 단점인 '핫스팟(Hotspot)' 문제가 발생하는 시나리오를 한 가지 예시로 설명하세요.", code: `// Shard 1: user_id 1 ~ 1,000,000\n// Shard 2: user_id 1,000,001 ~ 2,000,000`, k: ["최신", "시간순", "순차적", "마지막", "쏠림"], r: "정답 예시: '시간순으로 가입하는 사용자의 경우, 모든 쓰기(Write) 요청이 가장 마지막 Shard에만 집중되어 해당 Shard에만 부하가 몰리는 핫스팟 문제가 발생할 수 있습니다.'" },
+
+            // Programming & Architecture (15)
+            { type: 'multiple-choice', q: "좋은 객체 지향 설계를 위한 SOLID 원칙 중, '클래스는 확장에 대해서는 열려 있어야 하고, 변경에 대해서는 닫혀 있어야 한다'는 원칙은?", o: ["SRP", "OCP", "LSP", "DIP"], c: 1, r: "OCP(개방-폐쇄 원칙)는 기존 코드를 수정하지 않고도 새로운 기능을 추가할 수 있도록 설계해야 한다는 원칙입니다." },
+            { type: 'short-answer', q: "MSA에서 '서킷 브레이커' 패턴을 사용하는 주된 목적은 무엇인가요?", k: ["장애 확산 방지", "연쇄 실패 방지", "cascading failure"], r: "정답 키워드: '장애 확산 방지'. 특정 서비스의 장애가 다른 서비스로 연쇄적으로 전파되어 전체 시스템이 마비되는 것을 막습니다." },
+            { type: 'multiple-choice', q: "다음 중 '결합도(Coupling)'에 대한 설명으로 가장 올바른 것은?", o: ["하나의 모듈 내부 요소들이 얼마나 밀접하게 관련되어 있는지", "모듈 간에 서로 얼마나 의존하고 있는지", "코드가 얼마나 간결하고 읽기 쉬운지", "시스템이 얼마나 많은 트래픽을 처리할 수 있는지"], c: 1, r: "결합도는 모듈 간의 의존성을 나타내는 척도로, 좋은 설계는 낮은 결합도(Loose Coupling)를 지향합니다. 참고로 1번은 응집도(Cohesion)에 대한 설명입니다." },
+            { type: 'multiple-choice', q: "하나의 작업이 완료될 때까지 다음 작업이 차단(Blocking)되지 않고 계속 진행되는 프로그래밍 방식을 무엇이라고 하나요?", o: ["동기 프로그래밍", "비동기 프로그래밍", "병렬 프로그래밍", "절차적 프로그래밍"], c: 1, r: "비동기 프로그래밍은 I/O 작업 등을 기다리는 동안 다른 작업을 처리하여 시스템의 효율을 높입니다." },
+            { type: 'short-answer', q: "객체 지향 프로그래밍의 4가지 주요 특징을 모두 나열하세요.", k: ["추상화", "캡슐화", "상속", "다형성", "abstraction", "encapsulation", "inheritance", "polymorphism"], r: "정답 키워드: 추상화, 캡슐화, 상속, 다형성." },
+            { type: 'multiple-choice', q: "Spring Framework의 핵심 원리 중, 객체의 생성과 의존 관계 설정을 외부(DI 컨테이너)에서 담당하도록 하는 디자인 패턴은 무엇인가요?", o: ["AOP (관점 지향 프로그래밍)", "MVC (모델-뷰-컨트롤러)", "DI (의존성 주입)", "Singleton 패턴"], c: 2, r: "DI(Dependency Injection)를 통해 객체 간의 결합도를 낮추고 코드의 유연성과 테스트 용이성을 높일 수 있습니다." },
+            { type: 'coding', q: "SOLID 원칙 중 DIP(의존관계 역전 원칙)를 위반한 아래 코드의 문제점을 설명하고, 어떻게 개선할 수 있을까요?", code: `class Car {\n  private final ConcreteTire tire;\n\n  public Car() {\n    this.tire = new ConcreteTire(); // 구체적인 클래스에 직접 의존\n  }\n}`, k: ["인터페이스", "interface", "추상화", "주입", "생성자"], r: "정답 키워드: '인터페이스에 의존' 또는 '생성자를 통해 주입'. Car 클래스가 구체적인 ConcreteTire 클래스에 직접 의존하여 결합도가 높습니다. Tire 인터페이스를 만들고, 생성자를 통해 Tire 구현체를 주입받도록 변경해야 합니다." },
+            { type: 'multiple-choice', q: "RESTful API의 핵심 원칙 중, 서버가 클라이언트의 이전 요청 상태를 저장하지 않아 각 요청이 독립적으로 처리되도록 하는 특성은?", o: ["Uniform Interface", "Stateless (무상태성)", "Cacheable (캐시 가능)", "Layered System"], c: 1, r: "무상태성(Stateless) 원칙 덕분에 어떤 서버가 요청을 처리하든 상관없게 되어 서버의 부하 분산과 확장이 매우 용이해집니다." },
+            { type: 'short-answer', q: "사용자 관점에서 시스템의 행동(Behavior)을 기반으로 테스트 시나리오를 작성하는 개발 방법론으로, 'Given-When-Then' 구조를 사용하는 것은 무엇인가요?", k: ["bdd", "behavior-driven development"], r: "정답: BDD (Behavior-Driven Development). TDD에서 파생되었지만, 개발자뿐만 아니라 기획자, QA 등 여러 이해관계자가 시나리오를 이해하고 소통하기 용이합니다." },
+            { type: 'multiple-choice', q: "MVC(Model-View-Controller) 패턴에 대한 설명으로 옳지 않은 것은?", o: ["Model은 데이터와 비즈니스 로직을 담당한다.", "View는 사용자에게 보여지는 UI를 담당한다.", "Controller는 사용자의 입력을 받아 Model과 View를 제어한다.", "View는 Controller에 직접 의존하여 데이터를 요청한다."], c: 3, r: "MVC 패턴의 규칙상 View는 Controller에 의존해서는 안 됩니다. Controller가 Model의 데이터를 View로 전달하는 역할을 합니다." },
+            { type: 'short-answer', q: "큰 애플리케이션을 작고 독립적인 서비스들로 나누어 개발하는 아키텍처 스타일은 무엇인가요?", k: ["msa", "microservice"], r: "정답: MSA (Microservice Architecture). 각 서비스는 독립적으로 배포 및 확장이 가능하여 유연성과 개발 속도를 높일 수 있습니다." },
+            { type: 'multiple-choice', q: "시스템의 상태를 파악하고 문제를 진단하기 위한 '관찰 가능성(Observability)'의 3가지 핵심 요소가 아닌 것은?", o: ["Metrics", "Logs", "Traces", "Alerts"], c: 3, r: "Metrics, Logs, Traces는 시스템의 상태를 이해하기 위해 수집하는 데이터의 종류입니다. Alerts(알림)는 이 데이터들을 분석하여 문제가 발생했을 때 알리는 행위입니다." },
+            { type: 'coding', q: "아래 코드는 동기(Synchronous) 방식으로 동작합니다. 이를 비동기(Asynchronous) 방식으로 바꾼다면 어떤 장점이 있을지 설명하세요.", code: `function processUserRequest() {\n  const data = queryDatabase(); // 이 작업이 5초 걸린다고 가정\n  return processData(data);\n}`, k: ["다른 요청", "차단되지 않음", "non-blocking", "기다리지 않음"], r: "정답 키워드: '다른 요청 처리' 또는 '차단되지 않음'. 비동기 방식에서는 데이터베이스를 조회하는 5초 동안 다른 사용자 요청을 처리할 수 있어, 시스템 전체의 처리량과 응답성이 향상됩니다." },
+            { type: 'short-answer', q: "컨테이너화된 애플리케이션을 자동으로 배포, 확장 및 관리해주는 오픈소스 시스템은 무엇인가요?", k: ["쿠버네티스", "kubernetes", "k8s"], r: "정답: 쿠버네티스 (Kubernetes, k8s). MSA 환경에서 컨테이너 오케스트레이션을 위한 사실상의 표준으로 자리 잡았습니다." },
+            { type: 'multiple-choice', q: "요청이 들어오는 순서대로 서버에 균등하게 트래픽을 분배하는 가장 단순한 로드 밸런싱 알고리즘은 무엇인가요?", o: ["Least Connection", "IP Hash", "Weighted Round Robin", "Round Robin"], c: 3, r: "라운드 로빈은 가장 간단한 분배 방식이지만, 서버들의 성능이 동일하지 않은 경우에는 비효율적일 수 있습니다." }
         ];
 
-        const questionBox = document.getElementById('question-box');
-        const questionInfo = document.getElementById('question-info');
+        const startPage = document.getElementById('start-page');
+        const quizPage = document.getElementById('quiz-page');
+        const resultsPage = document.getElementById('results-page');
+        
+        const progressBar = document.getElementById('progress-bar');
         const questionNumberEl = document.getElementById('question-number');
         const questionTypeEl = document.getElementById('question-type');
         const questionTextEl = document.getElementById('question-text');
         const answerArea = document.getElementById('answer-area');
-        const feedbackEl = document.getElementById('feedback');
-        const submitBtn = document.getElementById('submit-btn');
-        const resultsContainer = document.getElementById('results-container');
-        const scoreEl = document.getElementById('score');
+        
+        const nextBtn = document.getElementById('next-btn');
+        const startBtn = document.getElementById('start-btn');
         const restartBtn = document.getElementById('restart-btn');
-        const quizBody = document.getElementById('quiz-body');
+        
+        const scoreEl = document.getElementById('score');
+        const reviewContainer = document.getElementById('review-container');
 
         let currentQuestionIndex = 0;
-        let score = 0;
+        let userAnswers = [];
+        let selectedAnswer = null;
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[j]];
+                [array[i], array[j]] = [array[j], array[i]];
             }
         }
 
         function startQuiz() {
             shuffleArray(quizData);
             currentQuestionIndex = 0;
-            score = 0;
-            resultsContainer.style.display = 'none';
-            questionBox.style.display = 'block';
-            questionInfo.style.display = 'flex';
-            submitBtn.textContent = '정답 확인';
-            submitBtn.style.display = 'block';
+            userAnswers = [];
+            selectedAnswer = null;
+            startPage.style.display = 'none';
+            resultsPage.style.display = 'none';
+            quizPage.style.display = 'block';
+            nextBtn.style.display = 'block';
             loadQuestion();
         }
 
         function loadQuestion() {
-            feedbackEl.style.display = 'none';
-            submitBtn.textContent = '정답 확인';
+            selectedAnswer = null;
+            updateProgressBar();
             
-            if (currentQuestionIndex >= quizData.length) {
-                showResults();
-                return;
-            }
-
             const currentQuestion = quizData[currentQuestionIndex];
             questionNumberEl.textContent = `문제 ${currentQuestionIndex + 1} / ${quizData.length}`;
-            questionTextEl.innerText = currentQuestion.question;
+            questionTextEl.innerHTML = currentQuestion.q;
             answerArea.innerHTML = '';
+            nextBtn.disabled = true;
 
             switch (currentQuestion.type) {
                 case 'multiple-choice':
                     questionTypeEl.textContent = '객관식';
                     const optionGroup = document.createElement('div');
                     optionGroup.className = 'option-group';
-                    currentQuestion.options.forEach((option, index) => {
+                    currentQuestion.o.forEach((option, index) => {
                         const label = document.createElement('label');
                         label.className = 'option-label';
                         label.innerHTML = `<input type="radio" name="answer" value="${index}"> ${option}`;
+                        label.addEventListener('click', () => handleSelection(label, index));
                         optionGroup.appendChild(label);
                     });
                     answerArea.appendChild(optionGroup);
                     break;
                 case 'short-answer':
-                    questionTypeEl.textContent = '주관식';
-                    answerArea.innerHTML = '<input type="text" class="short-answer-input" placeholder="정답을 입력하세요">';
-                    break;
                 case 'coding':
-                    questionTypeEl.textContent = '코딩 문제';
-                    questionTextEl.innerHTML = currentQuestion.question.replace(/\n/g, '<br>'); // Preserve line breaks
-                    answerArea.innerHTML = `<pre><code>${currentQuestion.code}</code></pre><textarea class="coding-input" placeholder="이곳에 설명을 작성하거나 코드를 채워주세요..."></textarea>`;
+                    questionTypeEl.textContent = currentQuestion.type === 'short-answer' ? '주관식' : '코딩 문제';
+                    if(currentQuestion.code) {
+                        answerArea.innerHTML = `<pre><code>${currentQuestion.code}</code></pre>`;
+                    }
+                    const input = document.createElement(currentQuestion.type === 'short-answer' ? 'input' : 'textarea');
+                    input.className = currentQuestion.type === 'short-answer' ? 'short-answer-input' : 'coding-input';
+                    input.placeholder = "정답을 입력하세요...";
+                    input.addEventListener('input', (e) => {
+                         selectedAnswer = e.target.value;
+                         nextBtn.disabled = !selectedAnswer;
+                    });
+                    answerArea.appendChild(input);
                     break;
+            }
+            
+             if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.textContent = '결과 보기';
+            } else {
+                nextBtn.textContent = '다음';
             }
         }
 
-        function submitAnswer() {
-            if (submitBtn.textContent.includes('다음')) {
-                currentQuestionIndex++;
+        function handleSelection(label, index) {
+            document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+            label.classList.add('selected');
+            selectedAnswer = index;
+            nextBtn.disabled = false;
+        }
+
+        function goToNextQuestion() {
+            userAnswers[currentQuestionIndex] = selectedAnswer;
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
                 loadQuestion();
-                return;
-            }
-
-            const currentQuestion = quizData[currentQuestionIndex];
-            let isCorrect = false;
-
-            if (currentQuestion.type === 'multiple-choice') {
-                const selectedRadio = document.querySelector('input[name="answer"]:checked');
-                if (selectedRadio) {
-                    isCorrect = parseInt(selectedRadio.value) === currentQuestion.correct;
-                }
-            } else { // short-answer & coding
-                const userInput = (document.querySelector('.short-answer-input, .coding-input')).value.toLowerCase();
-                if (userInput) {
-                    isCorrect = currentQuestion.keywords.some(keyword => userInput.includes(keyword.toLowerCase()));
-                }
-            }
-            
-            showFeedback(isCorrect, currentQuestion.rationale);
-            if (isCorrect) score++;
-
-            if (currentQuestionIndex < quizData.length - 1) {
-                submitBtn.textContent = '다음 문제 →';
             } else {
-                submitBtn.textContent = '결과 보기';
+                showResults();
             }
         }
         
-        function showFeedback(isCorrect, rationale) {
-             const feedbackContent = document.createElement('div');
-             feedbackEl.className = isCorrect ? 'feedback correct' : 'feedback wrong';
-             const title = isCorrect ? '정답입니다!' : '오답입니다.';
-             feedbackContent.innerHTML = `<p>${title}</p><div class="rationale">${rationale}</div>`;
-             feedbackEl.innerHTML = '';
-             feedbackEl.appendChild(feedbackContent);
-             feedbackEl.style.display = 'block';
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / quizData.length) * 100;
+            progressBar.style.width = `${progress}%`;
         }
 
         function showResults() {
-            questionBox.style.display = 'none';
-            questionInfo.style.display = 'none';
-            submitBtn.style.display = 'none';
-            resultsContainer.style.display = 'block';
+            quizPage.style.display = 'none';
+            nextBtn.style.display = 'none';
+            resultsPage.style.display = 'block';
+
+            let score = 0;
+            reviewContainer.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                let isCorrect = false;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.classList.add('review-item');
+                
+                let userAnswerText = '응답 없음';
+                let correctAnswerText = '';
+
+                if (q.type === 'multiple-choice') {
+                    isCorrect = userAnswer === q.c;
+                    userAnswerText = userAnswer !== null ? q.o[userAnswer] : '응답 없음';
+                    correctAnswerText = q.o[q.c];
+                } else { // short-answer & coding
+                    const userAnswerLower = userAnswer ? String(userAnswer).toLowerCase() : "";
+                    isCorrect = q.k.some(keyword => userAnswerLower.includes(keyword.toLowerCase()));
+                    userAnswerText = userAnswer || '응답 없음';
+                    correctAnswerText = q.r;
+                }
+
+                if (isCorrect) score++;
+                reviewItem.classList.add(isCorrect ? 'correct' : 'wrong');
+                
+                reviewItem.innerHTML = `
+                    <p class="review-question">${index + 1}. ${q.q}</p>
+                    <div class="review-answer">
+                        <span class="user-answer ${isCorrect ? '' : 'wrong'}"><strong>내 답변:</strong> ${userAnswerText}</span>
+                        <span class="correct-answer"><strong>정답 해설:</strong> ${q.type === 'multiple-choice' ? q.r : correctAnswerText}</span>
+                    </div>
+                `;
+                reviewContainer.appendChild(reviewItem);
+            });
+
             const percentage = Math.round((score / quizData.length) * 100);
-            scoreEl.innerHTML = `총 ${quizData.length}문제 중 <strong>${score}문제</strong>를 맞혔습니다! (정답률: ${percentage}%)`;
+            scoreEl.innerHTML = `총 ${quizData.length}문제 중 <strong>${score}문제</strong> 정답! (정답률: ${percentage}%)`;
         }
 
-        submitBtn.addEventListener('click', submitAnswer);
+        startBtn.addEventListener('click', startQuiz);
         restartBtn.addEventListener('click', startQuiz);
-
-        startQuiz();
+        nextBtn.addEventListener('click', goToNextQuestion);
     </script>
 </body>
 </html>
+
