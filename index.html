@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신입 온보딩 지식 확인 퀴즈 (Full Ver.)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto+Sans KR', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #quiz-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 650px;
+            overflow: hidden;
+        }
+
+        #quiz-header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #quiz-header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        #quiz-body {
+            padding: 24px 30px;
+        }
+
+        #question-box {
+            text-align: center;
+        }
+
+        #question-number {
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        #question-text {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        #answer-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #fff;
+            color: #333;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1em;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #f5f5f5;
+            border-color: #007bff;
+        }
+        
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .option-btn.correct {
+            background-color: #e7f5e8;
+            border-color: #28a745;
+            color: #155724;
+            font-weight: 700;
+        }
+
+        .option-btn.wrong {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+            font-weight: 700;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            display: none;
+            text-align: left;
+            line-height: 1.5;
+            border-left-width: 5px;
+            border-left-style: solid;
+        }
+        
+        #feedback.correct {
+            border-left-color: #28a745;
+            background-color: #f1f9f2;
+            display: block;
+        }
+
+        #feedback.wrong {
+            border-left-color: #dc3545;
+            background-color: #fcf2f2;
+            display: block;
+        }
+        
+        #feedback p {
+            margin: 0;
+            font-weight: 700;
+        }
+        #feedback .rationale {
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+
+        #navigation {
+            display: flex;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        #next-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            transition: background-color 0.2s ease;
+        }
+
+        #next-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        #results-container {
+             display: none;
+             text-align: center;
+             padding: 40px;
+        }
+        
+        #results-container h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        
+        #score {
+            font-size: 1.4em;
+            margin-bottom: 30px;
+        }
+
+        #restart-btn {
+             background-color: #28a745;
+             color: #fff;
+             border: none;
+             border-radius: 8px;
+             padding: 12px 24px;
+             font-size: 1em;
+             cursor: pointer;
+             font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="quiz-header">
+            <h1>신입 온보딩 지식 확인 퀴즈</h1>
+        </div>
+        <div id="quiz-body">
+            <div id="question-box">
+                 <p id="question-number"></p>
+                <p id="question-text"></p>
+                <div id="answer-options"></div>
+                <div id="feedback"></div>
+            </div>
+            
+            <div id="results-container">
+                <h2>퀴즈 완료!</h2>
+                <p id="score"></p>
+                <button id="restart-btn">처음부터 다시 풀기</button>
+            </div>
+        </div>
+        <div id="navigation">
+            <button id="next-btn">다음 문제 →</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            // --- Networking ---
+            {
+                category: "Networking",
+                question: "실시간 스트리밍이나 온라인 게임과 같이, 약간의 데이터 손실이 있더라도 속도가 매우 중요한 서비스에 더 적합한 프로토콜은 무엇인가요?",
+                options: ["TCP", "UDP", "HTTP", "FTP"],
+                correct: 1,
+                rationale: "UDP는 연결 설정 과정이 없고 데이터 전송의 신뢰성을 보장하지 않는 대신, 매우 빠른 속도를 제공하여 실시간성이 중요한 서비스에 유리합니다."
+            },
+            {
+                category: "Networking",
+                question: "URL 경로(예: /api/v1/users)를 기반으로 요청을 다른 서버 그룹으로 라우팅하는 기능은 어떤 종류의 로드 밸런서에서 제공되나요?",
+                options: ["L2 로드 밸런서", "L4 로드 밸런서", "L7 로드 밸런서", "DNS 라운드 로빈"],
+                correct: 2,
+                rationale: "L7 로드 밸런서는 OSI 7계층(애플리케이션 계층)에서 동작하여, HTTP 헤더나 URL 경로와 같은 구체적인 내용을 분석하고 이를 기반으로 정교한 트래픽 분산이 가능합니다."
+            },
+            {
+                category: "Networking",
+                question: "사용자가 웹사이트에 접속할 때, 물리적으로 가장 가까운 서버에서 이미지나 CSS 같은 정적 콘텐츠를 전송하여 로딩 속도를 향상시키는 기술은 무엇인가요?",
+                options: ["Load Balancer", "CDN (Content Delivery Network)", "API Gateway", "Web Socket"],
+                correct: 1,
+                rationale: "CDN은 전 세계 여러 지역에 분산된 캐시 서버(Edge Server)에 콘텐츠를 미리 저장해두고, 사용자와 가장 가까운 서버에서 콘텐츠를 제공하여 지연 시간을 최소화합니다."
+            },
+            {
+                category: "Networking",
+                question: "QUIC 프로토콜이 TCP에 비해 가지는 주요 장점이 아닌 것은 무엇인가요?",
+                options: ["연결 설정 시간 단축", "Head-of-Line Blocking 문제 해결", "연결 마이그레이션 지원", "완벽한 데이터 전송 신뢰성 보장"],
+                correct: 3,
+                rationale: "QUIC은 TCP의 신뢰성 기능을 UDP 위에서 구현하지만, TCP와 동일한 수준의 완벽한 신뢰성을 보장하기보다는 속도와의 균형을 맞추는 데 더 중점을 둡니다."
+            },
+            // --- Operating System ---
+            {
+                category: "Operating System",
+                question: "운영체제에서 실제 물리 메모리(RAM)보다 더 큰 메모리 공간을 프로세스가 사용할 수 있도록, 하드 디스크의 일부를 RAM처럼 사용하는 기술은 무엇인가요?",
+                options: ["파일 시스템", "스와핑(Swapping)", "가상 메모리(Virtual Memory)", "디스크 캐시"],
+                correct: 2,
+                rationale: "가상 메모리는 물리 메모리와 디스크의 스왑 공간을 합쳐, 프로세스에게 실제보다 더 큰 연속적인 메모리 공간이 있는 것처럼 보이게 하는 핵심적인 메모리 관리 기술입니다."
+            },
+            {
+                category: "Operating System",
+                question: "CPU가 가상 주소를 실제 물리 주소로 변환하는 작업을 전담하며, 메모리 보호 기능도 수행하는 하드웨어 장치는 무엇인가요?",
+                options: ["CPU 코어", "TLB (Translation Lookaside Buffer)", "MMU (Memory Management Unit)", "RAM 컨트롤러"],
+                correct: 2,
+                rationale: "MMU는 CPU와 메모리 사이에 위치하여 주소 변환 및 메모리 접근 제어를 담당하는 하드웨어로, 가상 메모리 시스템의 핵심입니다."
+            },
+            {
+                category: "Operating System",
+                question: "LRU(Least Recently Used) 캐시 교체 알고리즘을 효율적으로 구현하기 위해 일반적으로 사용되는 두 가지 자료구조의 조합은 무엇인가요?",
+                options: ["배열과 스택", "해시 맵과 이진 트리", "해시 맵과 이중 연결 리스트", "큐와 우선순위 큐"],
+                correct: 2,
+                rationale: "해시 맵은 O(1) 시간 복잡도로 데이터의 존재 여부와 위치를 빠르게 찾고, 이중 연결 리스트는 O(1) 시간 복잡도로 데이터의 사용 순서를 변경(맨 앞으로 이동/맨 뒤에서 삭제)하는 데 사용됩니다."
+            },
+             // --- Database ---
+            {
+                category: "Database",
+                question: "MySQL의 InnoDB 스토리지 엔진이 보장하는 ACID 원칙 중, 트랜잭션의 모든 작업이 전부 성공하거나 전부 실패하도록 보장하는 특성은 무엇인가요?",
+                options: ["원자성 (Atomicity)", "일관성 (Consistency)", "격리성 (Isolation)", "지속성 (Durability)"],
+                correct: 0,
+                rationale: "원자성은 'All or Nothing' 개념으로, 트랜잭션이 여러 단계로 이루어져 있더라도 마치 하나의 작업처럼 전체가 성공하거나 전체가 실패하는 것을 보장합니다."
+            },
+            {
+                category: "Database",
+                question: "Redis의 데이터 영속성(Persistence) 확보 방식 중, 실행된 모든 쓰기(write) 명령어를 파일에 순차적으로 기록하여 장애 시 데이터를 복구하는 방식은 무엇인가요?",
+                options: ["RDB (Redis Database)", "AOF (Append-Only File)", "Replication (복제)", "Clustering (클러스터링)"],
+                correct: 1,
+                rationale: "AOF는 모든 쓰기 명령어를 로그처럼 차곡차곡 파일에 추가(Append)하여 기록하는 방식으로, 시점 기반 스냅샷인 RDB보다 데이터 유실 위험이 적습니다."
+            },
+            {
+                category: "Database",
+                question: "Elasticsearch가 'LIKE %검색어%'와 같은 RDBMS의 전체 테이블 스캔 방식보다 텍스트 검색에 훨씬 효율적인 이유는 사용하는 핵심 자료구조 때문입니다. 이 자료구조는 무엇인가요?",
+                options: ["B+Tree", "해시 테이블", "역 인덱스 (Inverted Index)", "그래프 (Graph)"],
+                correct: 2,
+                rationale: "역 인덱스는 책의 '찾아보기'처럼, 문서의 '단어'를 기준으로 해당 단어가 포함된 '문서 ID'를 미리 저장해두어, 특정 단어로 검색 시 매우 빠르게 해당 문서를 찾을 수 있습니다."
+            },
+            {
+                category: "Database",
+                question: "하나의 거대한 데이터베이스를 여러 개의 작은 조각(Shard)으로 나누어 여러 서버에 분산 저장하는 기술을 무엇이라고 하나요?",
+                options: ["복제 (Replication)", "파티셔닝 (Partitioning)", "샤딩 (Sharding)", "인덱싱 (Indexing)"],
+                correct: 2,
+                rationale: "샤딩은 수평적 확장(Horizontal Scaling)을 가능하게 하는 대표적인 기술로, 단일 서버의 한계를 극복하고 대용량 데이터와 트래픽을 처리하기 위해 사용됩니다."
+            },
+            // --- Architecture & Programming ---
+            {
+                category: "Programming",
+                question: "좋은 객체 지향 설계를 위한 SOLID 원칙 중, '구체적인 구현체에 의존하지 말고, 역할(인터페이스)에 의존해야 한다'는 원칙은 무엇인가요?",
+                options: ["SRP (단일 책임 원칙)", "OCP (개방-폐쇄 원칙)", "LSP (리스코프 치환 원칙)", "DIP (의존관계 역전 원칙)"],
+                correct: 3,
+                rationale: "DIP는 상위 모듈이 하위 모듈의 구체적인 구현에 의존하지 않도록 하여, 부품을 갈아 끼우듯 유연하고 확장성 있는 설계를 가능하게 합니다."
+            },
+            {
+                category: "Architecture",
+                question: "마이크로서비스 아키텍처(MSA)에서 특정 서비스의 장애가 다른 서비스로 연쇄적으로 확산되는 것을 방지하기 위해 사용되는 패턴은 무엇인가요?",
+                options: ["API 게이트웨이", "서비스 디스커버리", "서킷 브레이커", "로드 밸런서"],
+                correct: 2,
+                rationale: "서킷 브레이커는 전기 회로의 차단기처럼, 장애가 감지된 서비스로의 요청을 일시적으로 차단하여 장애가 전체 시스템으로 퍼지는 것을 막고 해당 서비스가 복구될 시간을 벌어줍니다."
+            },
+            {
+                category: "Architecture",
+                question: "RESTful API의 핵심 원칙 중 하나로, 서버가 클라이언트의 이전 요청 상태를 저장하지 않아 각 요청이 완전히 독립적으로 처리되도록 하는 특성은 무엇인가요?",
+                options: ["Uniform Interface", "Stateless (무상태성)", "Cacheable (캐시 가능)", "Layered System"],
+                correct: 1,
+                rationale: "무상태성(Stateless) 원칙 덕분에 어떤 서버가 요청을 처리하든 상관없게 되어, 서버의 부하 분산과 확장이 매우 용이해지는 장점이 있습니다."
+            },
+            {
+                category: "Programming",
+                question: "사용자 관점에서 시스템의 행동(Behavior)을 기반으로 테스트 시나리오를 작성하는 개발 방법론으로, 'Given-When-Then' 구조를 사용하는 것은 무엇인가요?",
+                options: ["TDD (Test-Driven Development)", "DDD (Domain-Driven Design)", "BDD (Behavior-Driven Development)", "AOP (Aspect-Oriented Programming)"],
+                correct: 2,
+                rationale: "BDD는 TDD에서 파생되었지만, 개발자의 모듈 중심 테스트가 아닌 사용자의 행동 시나리오를 중심으로 테스트를 구성하여 기획자, 개발자, QA 등 여러 이해관계자가 소통하기 용이합니다."
+            }
+        ];
+
+        const quizContainer = document.getElementById('quiz-container');
+        const questionBox = document.getElementById('question-box');
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const answerOptionsEl = document.getElementById('answer-options');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const scoreEl = document.getElementById('score');
+        const restartBtn = document.getElementById('restart-btn');
+        const quizBody = document.getElementById('quiz-body');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startQuiz() {
+            shuffleArray(quizData); // 문제를 랜덤하게 섞음
+            currentQuestionIndex = 0;
+            score = 0;
+            resultsContainer.style.display = 'none';
+            questionBox.style.display = 'block';
+            nextBtn.style.display = 'none';
+            quizBody.style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            
+            if (currentQuestionIndex >= quizData.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            
+            questionNumberEl.innerText = `문제 ${currentQuestionIndex + 1} / ${quizData.length}`;
+            questionTextEl.innerText = currentQuestion.question;
+            answerOptionsEl.innerHTML = '';
+
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerText = option;
+                button.classList.add('option-btn');
+                button.addEventListener('click', () => selectAnswer(index));
+                answerOptionsEl.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedIndex) {
+            const currentQuestion = quizData[currentQuestionIndex];
+            const correctIndex = currentQuestion.correct;
+            
+            Array.from(answerOptionsEl.children).forEach((button, index) => {
+                button.disabled = true;
+                if (index === correctIndex) {
+                    button.classList.add('correct');
+                } else if (index === selectedIndex) {
+                    button.classList.add('wrong');
+                }
+            });
+
+            const feedbackContent = document.createElement('div');
+
+            if (selectedIndex === correctIndex) {
+                score++;
+                feedbackEl.className = 'feedback correct';
+                feedbackContent.innerHTML = `<p>정답입니다!</p><div class="rationale">${currentQuestion.rationale}</div>`;
+            } else {
+                feedbackEl.className = 'feedback wrong';
+                feedbackContent.innerHTML = `<p>오답입니다.</p><div class="rationale">${currentQuestion.rationale}</div>`;
+            }
+            
+            feedbackEl.innerHTML = ''; // Clear previous feedback
+            feedbackEl.appendChild(feedbackContent);
+            feedbackEl.style.display = 'block';
+            
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextBtn.innerText = '다음 문제 →';
+            } else {
+                nextBtn.innerText = '결과 보기';
+            }
+            nextBtn.style.display = 'block';
+        }
+        
+        function showResults() {
+            questionBox.style.display = 'none';
+            quizBody.style.display = 'none'; // Hide the main body
+            nextBtn.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            const percentage = Math.round((score / quizData.length) * 100);
+            scoreEl.innerHTML = `총 ${quizData.length}문제 중 <strong>${score}문제</strong>를 맞혔습니다! (정답률: ${percentage}%)`;
+        }
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+        
+        restartBtn.addEventListener('click', startQuiz);
+
+        // 퀴즈 시작
+        startQuiz();
+
+    </script>
+</body>
+</html>
